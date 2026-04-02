@@ -1,2 +1,7 @@
-# langchain-fastapi-api
-AI Productivity API using FastAPI and LangChain
+# LangChain FastAPI Project
+
+## Endpoint
+POST /analyze-day
+
+## Deploy
+Use Render for deployment.
