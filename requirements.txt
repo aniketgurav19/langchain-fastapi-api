@@ -2,4 +2,5 @@ fastapi
 uvicorn
 langchain
 langchain-openai
+openai
 pydantic
