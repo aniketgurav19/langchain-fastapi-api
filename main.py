@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from typing import List, Dict, Any
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import PromptTemplate
-from langchain.output_parsers import StructuredOutputParser, ResponseSchema
+from langchain_output_parsers import StructuredOutputParser, ResponseSchema
 import uvicorn
 
 app = FastAPI()
