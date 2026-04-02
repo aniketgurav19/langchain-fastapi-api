@@ -3,41 +3,20 @@ from pydantic import BaseModel
 from typing import List, Dict, Any
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import PromptTemplate
-from langchain_core.output_parsers import StructuredOutputParser, ResponseSchema
 import os
 import uvicorn
+import json
 
-# Initialize FastAPI
 app = FastAPI()
 
-# Load OpenAI API Key
+# LLM setup
 llm = ChatOpenAI(
     model="gpt-4o-mini",
     temperature=0.7,
     api_key=os.getenv("OPENAI_API_KEY")
 )
 
-# Define response format
-response_schemas = [
-    ResponseSchema(
-        name="praise",
-        description="One sentence praising their deep work or productive time."
-    ),
-    ResponseSchema(
-        name="time_leaks",
-        description="Identify the biggest waste of time or distraction from the data."
-    ),
-    ResponseSchema(
-        name="action_items",
-        description="A list of 3 strict, actionable improvements for tomorrow.",
-        type="list"
-    )
-]
-
-# Output parser
-output_parser = StructuredOutputParser.from_response_schemas(response_schemas)
-
-# Prompt template (FIXED)
+# Prompt
 prompt = PromptTemplate(
     template="""You are a strict productivity coach.
 
@@ -46,17 +25,18 @@ Analyze this user's daily activity:
 Date: {date}
 Logs: {logs}
 
-Give structured output:
-{format_instructions}
+Return ONLY valid JSON:
+
+{
+  "praise": "...",
+  "time_leaks": "...",
+  "action_items": ["...", "...", "..."]
+}
 """,
-    input_variables=["date", "logs"],
-    partial_variables={
-        "format_instructions": output_parser.get_format_instructions()
-    }
+    input_variables=["date", "logs"]
 )
 
-# Chain
-chain = prompt | llm | output_parser
+chain = prompt | llm
 
 # Request model
 class DailyData(BaseModel):
@@ -64,23 +44,31 @@ class DailyData(BaseModel):
     logs: List[Dict[str, Any]]
     user_id: str
 
-# Root endpoint
+# Root check
 @app.get("/")
 def home():
     return {"message": "LangChain API is running 🚀"}
 
-# AI analysis endpoint
+# AI endpoint
 @app.post("/analyze-day")
 async def analyze_day(data: DailyData):
     try:
-        result = chain.invoke({
+        response = chain.invoke({
             "date": data.date,
             "logs": data.logs
         })
-        return result
+
+        content = response.content
+
+        # Try to parse JSON
+        try:
+            return json.loads(content)
+        except:
+            return {"raw_response": content}
+
     except Exception as e:
         return {"error": str(e)}
 
-# Run locally (not used by Render but safe to keep)
+# Local run
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=10000)
