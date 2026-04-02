@@ -10,7 +10,7 @@ import uvicorn
 # Initialize FastAPI
 app = FastAPI()
 
-# ✅ Load API Key properly
+# Load OpenAI API Key
 llm = ChatOpenAI(
     model="gpt-4o-mini",
     temperature=0.7,
@@ -37,7 +37,7 @@ response_schemas = [
 # Output parser
 output_parser = StructuredOutputParser.from_response_schemas(response_schemas)
 
-# Prompt
+# Prompt template (FIXED)
 prompt = PromptTemplate(
     template="""You are a strict productivity coach.
 
@@ -69,7 +69,7 @@ class DailyData(BaseModel):
 def home():
     return {"message": "LangChain API is running 🚀"}
 
-# AI endpoint
+# AI analysis endpoint
 @app.post("/analyze-day")
 async def analyze_day(data: DailyData):
     try:
@@ -81,38 +81,6 @@ async def analyze_day(data: DailyData):
     except Exception as e:
         return {"error": str(e)}
 
-# Run server (for local use)
-if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=10000){format_instructions}
-""",
-    input_variables=["date", "logs"],
-    partial_variables={
-        "format_instructions": output_parser.get_format_instructions()
-    }
-)
-
-chain = prompt | llm | output_parser
-
-class DailyData(BaseModel):
-    date: str
-    logs: List[Dict[str, Any]]
-    user_id: str
-
-@app.post("/analyze-day")
-async def analyze_day(data: DailyData):
-    try:
-        result = chain.invoke({
-            "date": data.date,
-            "logs": data.logs
-        })
-        return result
-    except Exception as e:
-        return {"error": str(e)}
-
-@app.get("/")
-def home():
-    return {"message": "LangChain API is running 🚀"}
-
+# Run locally (not used by Render but safe to keep)
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=10000)
-
