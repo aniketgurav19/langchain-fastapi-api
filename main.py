@@ -27,11 +27,11 @@ Logs: {logs}
 
 Return ONLY valid JSON:
 
-{
+{{
   "praise": "...",
   "time_leaks": "...",
   "action_items": ["...", "...", "..."]
-}
+}}
 """,
     input_variables=["date", "logs"]
 )
